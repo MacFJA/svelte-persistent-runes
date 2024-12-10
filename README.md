@@ -39,10 +39,16 @@ Update your `./svelte.config.js` to add a new preprocessor:
  export default config;
 ```
 
+Update your `/src/app.d.ts` to add the following import to prevent TypeScript from complaining about the unknown function `$persist`:
+> 
+```diff
++import "@macfja/svelte-persistent-runes"
+```
+
+
 Replace your `$state` with `$persist`:
 ```diff
  <script>
-+import "@macfja/svelte-persistent-runes"
 -let count = $state(0);
 +let count = $persist(0, 'counter');
  </script>
@@ -85,7 +91,6 @@ Now that the preprocessor is added, you can use the `$persist` rune instead of t
 
 ```html
 <script>
-import "@macfja/svelte-persistent-runes"
 let count = $persist(0, 'counter');
 </script>
 <div class="counter">
@@ -101,7 +106,6 @@ let count = $persist(0, 'counter');
 <summary>./src/anywhere/data.svelte.ts</summary>
 
 ```ts
-import "@macfja/svelte-persistent-runes"
 export class Person {
     name = $persist('John', 'user-name')
     age = $persist(33, 'user-age')
@@ -118,9 +122,6 @@ export const currentUser = new Person()
 ```
 
 </details>
-
-> [!IMPORTANT]
-> You need to import `import "@macfja/svelte-persistent-runes"` to prevent Typescript to complain about the unknown function `$persist`
 
 ### Definition
 
@@ -230,7 +231,6 @@ The library have several built-in storage:
 
 ```html
 <script>
-import "@macfja/svelte-persistent-runes"
 import { buildOptions, MacfjaSerializer, BrowserSessionStorage } "@macfja/svelte-persistent-runes/options"
 let count = $persist(0, 'counter', buildOptions(MacfjaSerializer, BrowserSessionStorage));
 </script>
@@ -249,7 +249,6 @@ let count = $persist(0, 'counter', buildOptions(MacfjaSerializer, BrowserSession
 
 ```html
 <script>
-import "@macfja/svelte-persistent-runes"
 import { buildOptions, SuperJsnoSerializer, BrowserLocalStorage, addEncryptionStorage } "@macfja/svelte-persistent-runes/options"
 let count = $persist(0, 'counter', buildOptions(SuperJsnoSerializer, addEncryptionStorage(BrowserLocalStorage, '12345678901234567890123456879012'));
 </script>
