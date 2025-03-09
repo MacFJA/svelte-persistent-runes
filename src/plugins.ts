@@ -1,5 +1,5 @@
 import { type Position, SourceMapGenerator } from "source-map";
-import type { PreprocessorGroup } from "svelte/compiler";
+import type { PreprocessorGroup, Processed } from "svelte/compiler";
 import {
 	Block,
 	CallExpression,
@@ -13,6 +13,7 @@ import {
 	SyntaxKind,
 	VariableDeclaration,
 } from "ts-morph";
+import type { Plugin } from "vite";
 
 type ToTrackData = {
 	varname: string;
@@ -27,7 +28,36 @@ type AddMapping = (
 	generated: PositionSize,
 ) => void;
 
-export default function persistRune(): PreprocessorGroup {
+export function persistPlugin(): Plugin {
+	const preprocess = persistPreprocessor();
+	return {
+		name: "macfja-svelte-persistent-runes",
+		transform: (src: string, id: string) => {
+			if (/\.svelte\.(c|m|)[jt]s$/.test(id)) {
+				const result = preprocess.script?.({
+					content: src,
+					filename: id,
+					attributes: {},
+					markup: "",
+				}) as Processed;
+				if (!result) {
+					return {
+						code: src,
+					};
+				}
+				return {
+					code: result.code,
+					map: result.map as string,
+				};
+			}
+			return {
+				code: src,
+			};
+		},
+	};
+}
+
+export function persistPreprocessor(): PreprocessorGroup {
 	return {
 		script: ({ content, filename }) => {
 			if (content.indexOf("$persist") === -1) {
@@ -190,20 +220,20 @@ function processClass(node: Node, addMapping: AddMapping): void {
 			right?.getKind() !== SyntaxKind.CallExpression ||
 			!(right instanceof CallExpression)
 		) {
-			return;
+			continue;
 		}
 		const expression = right.getExpression();
 		if (
 			expression.getKind() !== SyntaxKind.Identifier ||
 			!(expression instanceof Identifier)
 		) {
-			return;
+			continue;
 		}
 		if (expression.getFullText().trim() !== "$persist") {
-			return;
+			continue;
 		}
 		if (right.getArguments().length < 2) {
-			return;
+			continue;
 		}
 
 		const key = right.getArguments()[1].print();

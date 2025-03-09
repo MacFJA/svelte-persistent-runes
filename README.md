@@ -51,11 +51,11 @@ Replace your `$state` with `$persist`:
 ## Usage
 
 This library have 2 parts:
-- A preprocessor to add the `$persist` rune.
+- A preprocessor to add the `$persist` rune (and optionally a Vite plugin).
 - A set of configuration to persist your data.
 
 You MUST add the preprocessor to use `$persist`.
-It's as simple as to add it in your Svelte configuration (`svelte.config.js`) with the import of `@macfja/svelte-persistent-runes/preprocessor`
+It's as simple as to add it in your Svelte configuration (`svelte.config.js`) with the import of `@macfja/svelte-persistent-runes/plugins`
 
 <details>
 <summary>./svelte.config.js</summary>
@@ -63,11 +63,11 @@ It's as simple as to add it in your Svelte configuration (`svelte.config.js`) wi
 ```js
 import adapter from '@sveltejs/adapter-auto';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
-import persist from "@macfja/svelte-persistent-runes/preprocessor"
+import { persistPreprocessor } from "@macfja/svelte-persistent-runes/plugins"
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-	preprocess: [vitePreprocess(), persist()],
+	preprocess: [vitePreprocess(), persistPreprocessor()],
 	kit: {
 		adapter: adapter()
 	}
@@ -77,6 +77,22 @@ export default config;
 ```
 
 </details>
+
+> [!IMPORTANT]
+> If you are using `*.svelte.js`/`*.svelte.ts` file you need to also add a Vite plugin:
+> <details><summary>./vite.config.ts</summary>
+>
+> ```ts
+> import { sveltekit } from '@sveltejs/kit/vite';
+> import { defineConfig } from 'vite';
+> import { persistPlugin as persist } from "@macfja/svelte-persistent-runes/plugins";
+>
+> export default defineConfig({
+>   plugins: [persist(), sveltekit()]
+> });
+> ```
+>
+> </details>
 
 Now that the preprocessor is added, you can use the `$persist` rune instead of the `$state` rune.
 
@@ -121,6 +137,10 @@ export const currentUser = new Person()
 
 > [!IMPORTANT]
 > You need to import `import "@macfja/svelte-persistent-runes"` to prevent Typescript to complain about the unknown function `$persist`
+>
+> ---
+>
+> You can add this import in an ambient Typescript Module (like `./src/app.d.ts` in SvelteKit), and you won't need to import it in every file
 
 ### Definition
 
@@ -200,12 +220,18 @@ The library have several built-in serializer:
  - `SuperJsonSerializer`: A [superjson] serializer
  - `NextJsonSerializerFactory`: factory to create a [next-json] based serializer
    - `NextJsonSerializerFactory`: A basic [next-json] serializer (no options, nor replacers, nor revivers)
+ - `PhpSerializeSerializerFactory`: factory to create a [php-serialize] based serializer
+   - `PhpSerializeSerializer`: A basic [php-serialize] serializer (no options)
+ - `SerializeAnythingSerializerFactory`: factory to create a [serialize-anything] based serializer
+   - `SerializeAnythingSerializer`: A basic [serialize-anything] serializer (no options)
 
 [ESSerializer]: https://www.npmjs.com/package/esserializer
 [Devalue]: https://www.npmjs.com/package/devalue
 [@macfja/serializer]: https://www.npmjs.com/package/@macfja/serializer
 [superjson]: https://www.npmjs.com/package/superjson
 [next-json]: https://www.npmjs.com/package/next-json
+[php-serialize]: https://www.npmjs.com/package/php-serialize
+[serialize-anything]: https://www.npmjs.com/package/serialize-anything
 
 #### The storage
 
@@ -231,7 +257,11 @@ The library have several built-in storage:
 ```html
 <script>
 import "@macfja/svelte-persistent-runes"
-import { buildOptions, MacfjaSerializer, BrowserSessionStorage } "@macfja/svelte-persistent-runes/options"
+import {
+    buildOptions,
+    MacfjaSerializer,
+    BrowserSessionStorage
+} "@macfja/svelte-persistent-runes/options"
 let count = $persist(0, 'counter', buildOptions(MacfjaSerializer, BrowserSessionStorage));
 </script>
 <div class="counter">
@@ -250,8 +280,16 @@ let count = $persist(0, 'counter', buildOptions(MacfjaSerializer, BrowserSession
 ```html
 <script>
 import "@macfja/svelte-persistent-runes"
-import { buildOptions, SuperJsnoSerializer, BrowserLocalStorage, addEncryptionStorage } "@macfja/svelte-persistent-runes/options"
-let count = $persist(0, 'counter', buildOptions(SuperJsnoSerializer, addEncryptionStorage(BrowserLocalStorage, '12345678901234567890123456879012'));
+import {
+    buildOptions,
+    SuperJsnoSerializer,
+    BrowserLocalStorage,
+    addEncryptionStorage
+} "@macfja/svelte-persistent-runes/options"
+let count = $persist(0, 'counter', buildOptions(
+    SuperJsnoSerializer,
+    addEncryptionStorage(BrowserLocalStorage, '12345678901234567890123456879012')
+);
 </script>
 <div class="counter">
     <button onclick={() => (count -= 1)} aria-label="Decrease the counter by one">-</button>
