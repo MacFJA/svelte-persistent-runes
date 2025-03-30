@@ -1,6 +1,6 @@
 {
 	"name": "@macfja/svelte-persistent-runes",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"description": "A Svelte reactive rune that keep its value through pages and reloads",
 	"license": "MIT",
 	"author": "MacFJA",

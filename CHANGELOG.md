@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0]
+
 ### Fixed
 
 - Class that don't only contains `$persist` are not transformed
@@ -28,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 First version
 
 [unreleased]: https://github.com/MacFJA/svelte-persistent-runes/compare/1.0.0...HEAD
+[1.1.0]: https://github.com/MacFJA/svelte-persistent-runes/compare/1.0.0...1.1.0
 [1.0.0]: https://github.com/MacFJA/svelte-persistent-runes/releases/tag/1.0.0
 
 [Issue#2]: https://github.com/MacFJA/svelte-persistent-runes/issues/2
