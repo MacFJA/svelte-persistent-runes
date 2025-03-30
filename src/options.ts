@@ -1,12 +1,8 @@
-import * as macfja from "@macfja/serializer";
 import {
 	type CookieOptions,
 	get as getCookie,
 	set as setCookie,
 } from "browser-cookies";
-import * as dv from "devalue";
-import ESSerializer from "esserializer";
-import { NJSON } from "next-json";
 // @ts-ignore
 import toHex from "sjcl-codec-hex/from-bits";
 // @ts-ignore
@@ -15,6 +11,15 @@ import fromHex from "sjcl-codec-hex/to-bits";
 import sjcl from "sjcl-es";
 import * as superjson from "superjson";
 import type { PersistentRunesOptions } from "./index";
+import {
+	DevalueSerializerFactory,
+	ESSerializerSerializerFactory,
+	JsonSerializerFactory,
+	MacfjaSerializerFactory,
+	NextJsonSerializerFactory,
+	PhpSerializeSerializerFactory,
+	SerializeAnythingSerializerFactory,
+} from "./serializer-factory";
 
 export type PersistentRunesStorage = Pick<
 	PersistentRunesOptions,
@@ -25,78 +30,6 @@ export type PersistentRunesSerializer = Pick<
 	"serialize" | "deserialize"
 >;
 
-export function JsonSerializerFactory(options?: {
-	replacer?: Parameters<typeof JSON.stringify>[1];
-	reviver?: Parameters<typeof JSON.parse>[1];
-	space?: Parameters<typeof JSON.stringify>[2];
-}): PersistentRunesSerializer {
-	return {
-		serialize<T>(input: T): string {
-			return JSON.stringify(input, options?.replacer, options?.space);
-		},
-		deserialize<T>(input: string): T {
-			return JSON.parse(input, options?.reviver) as T;
-		},
-	};
-}
-
-export function DevalueSerializerFactory(options?: {
-	reducers?: Parameters<typeof dv.stringify>[1];
-	revivers?: Parameters<typeof dv.parse>[1];
-}): PersistentRunesSerializer {
-	return {
-		serialize<T>(data: T): string {
-			return dv.stringify(data, options?.reducers);
-		},
-		deserialize<T>(input: string): T {
-			return dv.parse(input, options?.revivers);
-		},
-	};
-}
-
-export function ESSerializerSerializerFactory(options?: {
-	serializeOption?: Parameters<typeof ESSerializer.serialize>[1];
-	classes?: Parameters<typeof ESSerializer.deserialize>[1];
-}): PersistentRunesSerializer {
-	return {
-		serialize<T>(data: T): string {
-			return ESSerializer.serialize(data, options?.serializeOption);
-		},
-		deserialize<T>(input: string): T {
-			return ESSerializer.deserialize(input, options?.classes);
-		},
-	};
-}
-export function MacfjaSerializerFactory(options?: {
-	allowedClasses?: Parameters<typeof macfja.deserialize>[1];
-}): PersistentRunesSerializer {
-	return {
-		serialize<T>(data: T): string {
-			return macfja.serialize(data);
-		},
-		deserialize<T>(input: string): T {
-			return macfja.deserialize(input, options?.allowedClasses);
-		},
-	};
-}
-export function NextJsonSerializerFactory(options?: {
-	stringifyOptionsOrReplacer?: Parameters<typeof NJSON.stringify>[1];
-	space?: Parameters<typeof NJSON.stringify>[2];
-	parseOptionsOrReviver?: Parameters<typeof NJSON.parse>[1];
-}): PersistentRunesSerializer {
-	return {
-		serialize<T>(data: T): string {
-			return NJSON.stringify(
-				data,
-				options?.stringifyOptionsOrReplacer,
-				options?.space,
-			);
-		},
-		deserialize<T>(input: string): T {
-			return NJSON.parse(input, options?.parseOptionsOrReviver);
-		},
-	};
-}
 export const SuperJsonSerializer: PersistentRunesSerializer = {
 	serialize<T>(input: T): string {
 		return superjson.stringify(input);
@@ -185,6 +118,10 @@ export const MacfjaSerializer: PersistentRunesSerializer =
 	MacfjaSerializerFactory();
 export const NextJsonSerializer: PersistentRunesSerializer =
 	NextJsonSerializerFactory();
+export const PhpSerializeSerializer: PersistentRunesSerializer =
+	PhpSerializeSerializerFactory();
+export const SerializeAnythingSerializer: PersistentRunesSerializer =
+	SerializeAnythingSerializerFactory();
 
 /**
  * Create a `PersistentRunesOptions` from a serializer and a storage
@@ -200,3 +137,5 @@ export function buildOptions(
 		...(storage ?? BrowserLocalStorage),
 	};
 }
+
+export * from "./serializer-factory";

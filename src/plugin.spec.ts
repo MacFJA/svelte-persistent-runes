@@ -1,11 +1,11 @@
 import def, { type ExecutionContext, type TestFn } from "ava";
-import plugin from "./plugin";
+import { persistPreprocessor } from "./plugins";
 
 const test: TestFn = def as unknown as TestFn;
 
 test("Transform variable", async (t: ExecutionContext) => {
 	const input = "let name = $persist('John', 'name');";
-	const actual = await plugin().script?.({
+	const actual = await persistPreprocessor().script?.({
 		content: input,
 		filename: "test.js",
 		attributes: {},
@@ -17,7 +17,7 @@ test("Transform variable", async (t: ExecutionContext) => {
 		`import * as dyn___persistent_runes from "@macfja/svelte-persistent-runes";
 
 let name = $state(dyn___persistent_runes.load('name', undefined) ?? 'John');
-$effect.root(() => {$effect(() => dyn___persistent_runes.save('name', name, undefined))});`,
+$effect.root(() => {$effect(() => dyn___persistent_runes.save('name', $state.snapshot(name), undefined))});`,
 	);
 	t.is(
 		actual?.map,
@@ -27,7 +27,7 @@ $effect.root(() => {$effect(() => dyn___persistent_runes.save('name', name, unde
 test("Transform variable with options", async (t: ExecutionContext) => {
 	const input =
 		"let name = $persist('John', 'name', {serialize: (v) => JSON.stringify(v)});";
-	const actual = await plugin().script?.({
+	const actual = await persistPreprocessor().script?.({
 		content: input,
 		filename: "test.js",
 		attributes: {},
@@ -38,7 +38,7 @@ test("Transform variable with options", async (t: ExecutionContext) => {
 		`import * as dyn___persistent_runes from "@macfja/svelte-persistent-runes";
 
 let name = $state(dyn___persistent_runes.load('name', { serialize: (v) => JSON.stringify(v) }) ?? 'John');
-$effect.root(() => {$effect(() => dyn___persistent_runes.save('name', name, { serialize: (v) => JSON.stringify(v) }))});`,
+$effect.root(() => {$effect(() => dyn___persistent_runes.save('name', $state.snapshot(name), { serialize: (v) => JSON.stringify(v) }))});`,
 	);
 
 	t.is(
@@ -49,7 +49,7 @@ $effect.root(() => {$effect(() => dyn___persistent_runes.save('name', name, { se
 
 test("Transform class", async (t: ExecutionContext) => {
 	const input = "class Test { name = $persist('John', 'name'); }";
-	const actual = await plugin().script?.({
+	const actual = await persistPreprocessor().script?.({
 		content: input,
 		filename: "test.js",
 		attributes: {},
@@ -62,7 +62,7 @@ test("Transform class", async (t: ExecutionContext) => {
 class Test { name = $state(dyn___persistent_runes.load('name', undefined) ?? 'John');
 
     constructor() {
-        $effect.root(() => {$effect(() => dyn___persistent_runes.save('name', this.name, undefined))});
+        $effect.root(() => {$effect(() => dyn___persistent_runes.save('name', $state.snapshot(this.name), undefined))});
     }
  }`,
 	);
@@ -77,7 +77,7 @@ test("Transform class with several props", async (t: ExecutionContext) => {
   name = $persist('John', 'name');
   age = $persist(0, 'user-age');
 }`;
-	const actual = await plugin().script?.({
+	const actual = await persistPreprocessor().script?.({
 		content: input,
 		filename: "test.js",
 		attributes: {},
@@ -92,15 +92,15 @@ class Test {
   age = $state(dyn___persistent_runes.load('user-age', undefined) ?? 0);
 
     constructor() {
-        $effect.root(() => {$effect(() => dyn___persistent_runes.save('name', this.name, undefined))
-        $effect(() => dyn___persistent_runes.save('user-age', this.age, undefined))});
+        $effect.root(() => {$effect(() => dyn___persistent_runes.save('name', $state.snapshot(this.name), undefined))
+        $effect(() => dyn___persistent_runes.save('user-age', $state.snapshot(this.age), undefined))});
     }
 }`,
 	);
 });
 test("Transform class with parent", async (t: ExecutionContext) => {
 	const input = "class Test extends Base { name = $persist('John', 'name'); }";
-	const actual = await plugin().script?.({
+	const actual = await persistPreprocessor().script?.({
 		content: input,
 		filename: "test.js",
 		attributes: {},
@@ -114,7 +114,7 @@ class Test extends Base { name = $state(dyn___persistent_runes.load('name', unde
 
     constructor(...args: any[]) {
         super(...args);
-        $effect.root(() => {$effect(() => dyn___persistent_runes.save('name', this.name, undefined))});
+        $effect.root(() => {$effect(() => dyn___persistent_runes.save('name', $state.snapshot(this.name), undefined))});
     }
  }`,
 	);
@@ -122,7 +122,7 @@ class Test extends Base { name = $state(dyn___persistent_runes.load('name', unde
 test("Transform class with constructor", async (t: ExecutionContext) => {
 	const input =
 		"class Test { name = $persist('John', 'name'); constructor() { console.log('test'); } }";
-	const actual = await plugin().script?.({
+	const actual = await persistPreprocessor().script?.({
 		content: input,
 		filename: "test.js",
 		attributes: {},
@@ -133,6 +133,6 @@ test("Transform class with constructor", async (t: ExecutionContext) => {
 		`import * as dyn___persistent_runes from "@macfja/svelte-persistent-runes";
 
 class Test { name = $state(dyn___persistent_runes.load('name', undefined) ?? 'John'); constructor() { console.log('test');
-    $effect.root(() => {$effect(() => dyn___persistent_runes.save('name', this.name, undefined))}); } }`,
+    $effect.root(() => {$effect(() => dyn___persistent_runes.save('name', $state.snapshot(this.name), undefined))}); } }`,
 	);
 });
